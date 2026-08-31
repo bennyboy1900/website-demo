@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Wahrzeichen Deutschland · 3D</title>
+<meta name="description" content="Eine cinematische 3D-Karte aller wichtigen Wahrzeichen Deutschlands – mit Schwerpunkt Münster. Tageszeit, Wetter und Kamera frei einstellbar." />
+<meta name="theme-color" content="#0a0e14" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230d1219'/%3E%3Cpath d='M16 5l8 8v14H8V13z' fill='none' stroke='%23f2c078' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M16 27V17' stroke='%237fd1de' stroke-width='2'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="assets/css/style.css" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three/build/three.module.js",
+    "three/addons/": "./vendor/three/addons/"
+  }
+}
+</script>
+</head>
+<body>
+
+<!-- ═══════════════ Ladebildschirm ═══════════════ -->
+<div id="loader" class="loader">
+  <div class="loader__inner">
+    <div class="loader__mark">
+      <svg viewBox="0 0 120 120" aria-hidden="true">
+        <path class="lm-outline" d="M60 10 L96 34 L96 96 L24 96 L24 34 Z" />
+        <path class="lm-spire" d="M60 96 V44 L60 30" />
+        <circle class="lm-dot" cx="60" cy="26" r="4" />
+      </svg>
+    </div>
+    <h1 class="loader__title">Wahrzeichen&nbsp;Deutschland</h1>
+    <p class="loader__sub">Eine cinematische 3D-Reise · Fokus Münster</p>
+    <div class="loader__bar"><i id="loaderBar"></i></div>
+    <p class="loader__status" id="loaderStatus">Karte wird aufgebaut …</p>
+    <button class="loader__start" id="startBtn" disabled>Reise starten</button>
+  </div>
+</div>
+
+<!-- ═══════════════ 3D-Bühne ═══════════════ -->
+<canvas id="stage"></canvas>
+<div id="labels" class="labels" aria-hidden="false"></div>
+<div id="flash" class="flash"></div>
+<div id="vignette" class="vignette"></div>
+<div id="bars" class="cinebars"><i></i><i></i></div>
+
+<!-- ═══════════════ Kopfzeile ═══════════════ -->
+<header class="topbar" id="topbar">
+  <button class="brand" id="brandBtn" title="Zurück zur Deutschlandkarte">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 5v13H5V8z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 21v-7" stroke="currentColor" stroke-width="1.6"/></svg>
+    <span><b>Wahrzeichen</b> Deutschland</span>
+  </button>
+
+  <div class="search" id="searchWrap">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+    <input id="searchInput" type="search" placeholder="Wahrzeichen, Stadt oder Bundesland suchen …" autocomplete="off" spellcheck="false" />
+    <kbd>/</kbd>
+    <div class="search__results" id="searchResults"></div>
+  </div>
+
+  <nav class="tools">
+    <button class="tbtn" id="listBtn" title="Alle Wahrzeichen (L)"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg><span>Liste</span></button>
+    <button class="tbtn" id="tourBtn" title="Kinotour starten (T)"><svg viewBox="0 0 24 24"><path d="M8 5l12 7-12 7z" fill="currentColor"/></svg><span>Tour</span></button>
+    <button class="tbtn" id="setBtn" title="Einstellungen (E)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 2.8v2.6M12 18.6v2.6M21.2 12h-2.6M5.4 12H2.8M18.5 5.5l-1.8 1.8M7.3 16.7l-1.8 1.8M18.5 18.5l-1.8-1.8M7.3 7.3L5.5 5.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span>Einstellungen</span></button>
+    <button class="tbtn tbtn--icon" id="fsBtn" title="Vollbild (F)"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+  </nav>
+</header>
+
+<!-- ═══════════════ Rand-Pfeile ═══════════════ -->
+<button class="edge edge--left"  id="edgePrev" title="Vorheriges Wahrzeichen (←)">
+  <span class="edge__glyph"><svg viewBox="0 0 24 24"><path d="M15 4L7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+  <span class="edge__label" id="edgePrevLabel">Zurück</span>
+</button>
+<button class="edge edge--right" id="edgeNext" title="Nächstes Wahrzeichen (→)">
+  <span class="edge__glyph"><svg viewBox="0 0 24 24"><path d="M9 4l8 8-8 8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+  <span class="edge__label" id="edgeNextLabel">Weiter</span>
+</button>
+<button class="edge edge--top" id="edgeUp" title="Ganz Deutschland (↑)">
+  <span class="edge__glyph"><svg viewBox="0 0 24 24"><path d="M4 15l8-8 8 8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+  <span class="edge__label">Deutschlandkarte</span>
+</button>
+<button class="edge edge--bottom" id="edgeDown" title="Nächste Stadt (↓)">
+  <span class="edge__glyph"><svg viewBox="0 0 24 24"><path d="M4 9l8 8 8-8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+  <span class="edge__label" id="edgeDownLabel">Nächste Stadt</span>
+</button>
+
+<!-- ═══════════════ Steckbrief (rechts) ═══════════════ -->
+<aside class="panel panel--info" id="infoPanel" aria-hidden="true">
+  <button class="panel__close" id="infoClose" title="Schließen (Esc)">&times;</button>
+  <div class="panel__scroll" id="infoBody"></div>
+</aside>
+
+<!-- ═══════════════ Explorer (links) ═══════════════ -->
+<aside class="panel panel--list" id="listPanel" aria-hidden="true">
+  <div class="panel__head">
+    <h2>Alle Wahrzeichen</h2>
+    <button class="panel__close" id="listClose" title="Schließen">&times;</button>
+  </div>
+  <div class="chips" id="catChips"></div>
+  <div class="panel__scroll" id="listBody"></div>
+</aside>
+
+<!-- ═══════════════ Einstellungen ═══════════════ -->
+<aside class="panel panel--set" id="setPanel" aria-hidden="true">
+  <div class="panel__head">
+    <h2>Einstellungen</h2>
+    <button class="panel__close" id="setClose" title="Schließen">&times;</button>
+  </div>
+  <div class="panel__scroll" id="setBody"></div>
+</aside>
+
+<!-- ═══════════════ Fußzeile / HUD ═══════════════ -->
+<footer class="hud" id="hud">
+  <div class="hud__left">
+    <span class="hud__place" id="hudPlace">Deutschland</span>
+    <span class="hud__sep"></span>
+    <span class="hud__count" id="hudCount">— Wahrzeichen</span>
+  </div>
+  <div class="hud__center" id="hudTicker"></div>
+  <div class="hud__right">
+    <span class="hud__pill" id="hudTime">12:00</span>
+    <span class="hud__pill" id="hudWeather">Klar</span>
+    <span class="hud__pill hud__pill--ghost" id="hudFps">– fps</span>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<noscript><div class="noscript">Diese Seite benötigt JavaScript und WebGL.</div></noscript>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
