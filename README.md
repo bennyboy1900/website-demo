@@ -81,6 +81,33 @@ Kein Build-Schritt, keine Abhängigkeiten zu installieren – three.js liegt unt
 
 ---
 
+## Auf Vercel veröffentlichen
+
+Die Seite ist rein statisch, `vercel.json` im Projektwurzelverzeichnis
+konfiguriert Auslieferung und Caching. Es ist weder ein Framework-Preset noch
+ein Build-Befehl nötig.
+
+**Über die Weboberfläche**
+
+1. Auf [vercel.com/new](https://vercel.com/new) das Repository importieren.
+2. Framework Preset auf **Other** stehen lassen, Build Command und Output
+   Directory leer lassen – Root Directory bleibt `./`.
+3. **Deploy** klicken. Nach rund einer Minute liegt die Seite unter
+   `https://<projektname>.vercel.app`.
+
+**Über die CLI**
+
+```bash
+npx vercel        # Vorschau-Deployment
+npx vercel --prod # Produktions-Deployment
+```
+
+Jeder weitere Push auf den Standardbranch löst automatisch ein neues
+Produktions-Deployment aus, Pushes auf andere Branches erzeugen
+Vorschau-URLs.
+
+---
+
 ## Tastatur
 
 | Taste | Wirkung |
